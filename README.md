@@ -162,23 +162,24 @@ We provide a variety of baseline agents, please refer to [ijcai2022-nmmo-baselin
 To do local evaluation, we provide `Rollout` for easier debug, here is an example. The environment is same with the online evaluation environment in PvE Stage 1.
 
 ```python
-class YourTeam(Team):
-    def act(self, observations):
-        actions = {}
-        for player_idx, obs in observations.items():
-            actions[player_idx] = {}
-        return actions
+from ijcai2022nmmo import CompetitionConfig, scripted, submission, RollOut
 
+config = CompetitionConfig()
 
-def local_evaluation():
-    config = CompetitionConfig()
-    your_team = YourTeam(team_id="my_team", env_config=config)
-    all_teams = [scripted.CombatTeam(f"combat-{i}", config) for i in range(3)] + \
-        [scripted.ForageTeam(f"forage-{i}", config) for i in range(5)] + \
-        [scripted.RandomTeam(f"random-{i}", config) for i in range(7)] + \
-        [your_team]
-    ro = RollOut(config, all_teams, True)
-    ro.run()
+my_team = submission.get_team_from_submission(
+    submission_path="my-submission/",
+    team_id="MyTeam",
+    env_config=config,
+)
+
+teams = []
+teams.extend([scripted.CombatTeam(f"Combat-{i}", config) for i in range(3)])
+teams.extend([scripted.ForageTeam(f"Forage-{i}", config) for i in range(5)])
+teams.extend([scripted.RandomTeam(f"Random-{i}", config) for i in range(7)])
+teams.append(my_team)
+
+ro = RollOut(config, teams, parallel=True, show_progress=True)
+ro.run(n_episode=1)
 ```
 
 # FAQ
