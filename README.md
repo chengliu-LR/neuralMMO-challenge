@@ -171,7 +171,7 @@ my_team = submission.get_team_from_submission(
     team_id="MyTeam",
     env_config=config,
 )
-# Or initialize your team directly
+# Or initialize the team directly
 # my_team = MyTeam("Myteam", config, ...)
 
 teams = []
