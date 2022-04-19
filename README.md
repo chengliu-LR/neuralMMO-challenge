@@ -171,6 +171,8 @@ my_team = submission.get_team_from_submission(
     team_id="MyTeam",
     env_config=config,
 )
+# Or initialize your team directly
+# my_team = MyTeam("Myteam", config, ...)
 
 teams = []
 teams.extend([scripted.CombatTeam(f"Combat-{i}", config) for i in range(3)])
