@@ -66,8 +66,3 @@ class CombatNoExploreTeam(ScriptedTeam):
 
 class CombatTribridTeam(ScriptedTeam):
     agent_klass = baselines.CombatTribrid
-
-
-class Submission:
-    team_klass = CombatTeam
-    init_params = {}
