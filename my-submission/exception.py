@@ -1,2 +1,0 @@
-class TeamTimeoutError(TimeoutError):
-    pass

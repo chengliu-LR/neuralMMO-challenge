@@ -69,5 +69,5 @@ class CombatTribridTeam(ScriptedTeam):
 
 
 class Submission:
-    team_klass = CombatTeam
+    team_klass = CombatTribridTeam
     init_params = {}
