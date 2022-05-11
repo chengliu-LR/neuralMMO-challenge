@@ -223,16 +223,16 @@ class CombatNoExplore(Scripted):
         return self.actions
 
 
-class Combat(Scripted):
+class Protoss(Scripted):
     '''Forages, fights, and explores'''
-    name = 'Combat_'
+    name = 'Protoss_'
 
     def __call__(self, obs):
         super().__call__(obs)
 
         self.adaptive_control_and_targeting()
 
-        self.style = nmmo.action.Range
+        self.style = nmmo.action.Mage
         self.attack()
 
         return self.actions

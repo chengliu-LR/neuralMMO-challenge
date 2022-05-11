@@ -11,6 +11,7 @@ my_team = submission.get_team_from_submission(
 # Or initialize the team directly
 # my_team = MyTeam("Myteam", config, ...)
 
+# ijcai2022nmmo pve stage1 setting
 teams = []
 teams.append(my_team)
 teams.extend([scripted.CombatTeam(f"Combat-{i}", config) for i in range(3)])

@@ -48,7 +48,7 @@ def explore(config, ob, actions, spawnR, spawnC):
     cc = int(np.round(vision * vC / mmag))
 
     pathfind(config, ob, actions, rr, cc)
-
+    
 
 def meander(realm, actions, entity):
     actions[nmmo.action.Move] = {

@@ -2,7 +2,7 @@ import nmmo
 from typing import Dict, Type, List
 
 from ijcai2022nmmo.evaluation.team import Team
-import baselines
+import scripted.baselines as baselines
 
 
 class ScriptedTeam(Team):
