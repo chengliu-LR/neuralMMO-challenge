@@ -2,7 +2,7 @@ import nmmo
 from typing import Dict, Type, List
 
 from ijcai2022nmmo.evaluation.team import Team
-from ijcai2022nmmo.scripted import baselines
+import baselines
 
 
 class ScriptedTeam(Team):
@@ -56,8 +56,8 @@ class ForageTeam(ScriptedTeam):
     agent_klass = baselines.Forage
 
 
-class CombatTeam(ScriptedTeam):
-    agent_klass = baselines.Combat
+class rickyProtoss(ScriptedTeam):
+    agent_klass = baselines.Protoss
 
 
 class CombatNoExploreTeam(ScriptedTeam):
@@ -69,5 +69,5 @@ class CombatTribridTeam(ScriptedTeam):
 
 
 class Submission:
-    team_klass = CombatTribridTeam
+    team_klass = rickyProtoss
     init_params = {}

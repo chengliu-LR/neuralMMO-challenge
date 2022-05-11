@@ -28,14 +28,15 @@ class ScriptedTeam(Team):
         ]
 
     def act(self, observations: Dict[int, dict]) -> Dict[int, dict]:
+        # each agent take action based on its own observations, agent indexed from 0 to 7 for all teams
         actions = {i: self.agents[i](obs) for i, obs in observations.items()}
         for i in actions:
             for atn, args in actions[i].items():
                 for arg, val in args.items():
-                    if len(arg.edges) > 0:
+                    if len(arg.edges) > 0: # ?
                         actions[i][atn][arg] = arg.edges.index(val)
                     else:
-                        targets = self.agents[i].targets
+                        targets = self.agents[i].targets # agents[i].targets declared in Scripted(nmmo.Agent) in baselines
                         actions[i][atn][arg] = targets.index(val)
         return actions
 
@@ -66,8 +67,3 @@ class CombatNoExploreTeam(ScriptedTeam):
 
 class CombatTribridTeam(ScriptedTeam):
     agent_klass = baselines.CombatTribrid
-
-
-class Submission:
-    team_klass = CombatTeam
-    init_params = {}

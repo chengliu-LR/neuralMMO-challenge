@@ -152,6 +152,9 @@ def rollout(submission_path: str, startby: str, registry: str):
 
     class Config(CompetitionConfig):
         NMAPS = 1
+        SAVE_REPLAY = "replays/rickyProtoss"
+    
+    config = Config()
 
     if startby == "docker":
         ok(f"Try run submission in docker container ...")
@@ -166,19 +169,17 @@ def rollout(submission_path: str, startby: str, registry: str):
         sys.exit(1)
 
     from ijcai2022nmmo import ProxyTeam
-    team = ProxyTeam("my-submission", Config(), "127.0.0.1", PORT)
+    team = ProxyTeam("rickyProtoss", config, "127.0.0.1", PORT) # PORT in consistent with TeamServer
 
     try:
         from ijcai2022nmmo import RollOut, scripted
-        ro = RollOut(
-            Config(),
-            [
-                scripted.RandomTeam(f"random-{i}", Config())
-                for i in range(CompetitionConfig.NPOP - 1)
-            ] + [team],
-            True,
-        )
-        ro.run()
+        teams = []
+        teams.append(team)
+        teams.extend([scripted.CombatTeam(f"Combat-{i}", config) for i in range(3)])
+        teams.extend([scripted.ForageTeam(f"Forage-{i}", config) for i in range(5)])
+        teams.extend([scripted.RandomTeam(f"Random-{i}", config) for i in range(7)])
+        ro = RollOut(config, teams, parallel=True, show_progress=True)
+        ro.run(n_timestep=1024, n_episode=1, render=False)
     except:
         raise
     finally:

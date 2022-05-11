@@ -3,3 +3,5 @@ __pycache__/
 .vscode
 maps/
 *.ipynb
+replays/
+.DS_Store
