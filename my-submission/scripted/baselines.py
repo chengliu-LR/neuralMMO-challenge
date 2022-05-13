@@ -1,9 +1,7 @@
-from ijcai2022nmmo.scripted import attack, move
-
 import nmmo
 from nmmo import scripting
 from nmmo.lib import colors
-
+from scripted import attack, move
 
 class Scripted(nmmo.Agent):
     '''Template class for scripted models.
@@ -27,7 +25,8 @@ class Scripted(nmmo.Agent):
     @property
     def forage_criterion(self) -> bool:
         '''Return true if low on food or water'''
-        min_level = 7
+        # this parameter can be tuned
+        min_level = 6
         return self.food <= min_level or self.water <= min_level
 
     def forage(self):
@@ -58,6 +57,12 @@ class Scripted(nmmo.Agent):
             assert self.targetID is not None
             attack.target(self.config, self.actions, self.style, self.targetID)
 
+    
+    def hit_and_run(self):
+        '''Hit and run to dynamicly attack & evade from the target agent'''
+        pass
+
+
     def select_combat_style(self):
         '''Select a combat style based on distance from the current target'''
         if self.target is None:
@@ -69,21 +74,6 @@ class Scripted(nmmo.Agent):
             self.style = nmmo.action.Range
         else:
             self.style = nmmo.action.Mage
-
-    def target_weak(self):
-        '''Target the nearest agent if it is weak'''
-        if self.closest is None:
-            return False
-
-        selfLevel = scripting.Observation.attribute(
-            self.ob.agent, nmmo.Serialized.Entity.Level)
-        targLevel = scripting.Observation.attribute(
-            self.closest, nmmo.Serialized.Entity.Level)
-
-        if targLevel <= selfLevel <= 5 or selfLevel >= targLevel + 3:
-            self.target = self.closest
-            self.targetID = self.closestID
-            self.targetDist = self.closestDist
 
     def scan_agents(self):
         '''Scan the nearby area for agents'''
@@ -106,6 +96,26 @@ class Scripted(nmmo.Agent):
         self.target = None
         self.targetID = None
         self.targetDist = None
+
+    def target_weak(self):
+        '''Target the nearest agent if it is weak'''
+        # TODO: this does not make sense because you need to target 
+        # at the most valuable agent rather than the nearest
+        if self.closest is None:
+            return False
+
+        selfLevel = scripting.Observation.attribute(
+            self.ob.agent, nmmo.Serialized.Entity.Level)
+        targLevel = scripting.Observation.attribute(
+            self.closest, nmmo.Serialized.Entity.Level)
+        targPopulation = scripting.Observation.attribute(
+            self.closest, nmmo.Serialized.Entity.Population)
+
+        # this can be an aggresive attack strategy
+        if targLevel <= selfLevel <= 5 or selfLevel >= targLevel or targPopulation == -1: # attack passive NPC
+            self.target = self.closest
+            self.targetID = self.closestID
+            self.targetDist = self.closestDist
 
     def adaptive_control_and_targeting(self, explore=True):
         '''Balanced foraging, evasion, and exploration'''
@@ -232,7 +242,7 @@ class Protoss(Scripted):
 
         self.adaptive_control_and_targeting()
 
-        self.style = nmmo.action.Mage
+        self.style = nmmo.action.Range
         self.attack()
 
         return self.actions

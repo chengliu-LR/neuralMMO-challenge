@@ -1,1 +1,5 @@
 replays/rickyProtoss.replay filter=lfs diff=lfs merge=lfs -text
+replays/PVE_STAGE1.replay filter=lfs diff=lfs merge=lfs -text
+replays/rickyProtoss.json filter=lfs diff=lfs merge=lfs -text
+replays/PVE_STAGE1.json filter=lfs diff=lfs merge=lfs -text
+replays/PVE_STAGE2.replay filter=lfs diff=lfs merge=lfs -text

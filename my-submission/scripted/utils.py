@@ -1,7 +1,6 @@
 import nmmo
 from nmmo.lib import material
 
-
 def l1(start, goal):
     sr, sc = start
     gr, gc = goal

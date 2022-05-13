@@ -1,12 +1,11 @@
 import numpy as np
 import random as rand
-
 from queue import PriorityQueue, Queue
-
 import nmmo
 from nmmo.lib import material
 
-from ijcai2022nmmo.scripted import utils
+#from ijcai2022nmmo.scripted import utils
+import scripted.utils as utils
 
 
 def adjacentPos(pos):
@@ -23,7 +22,7 @@ def vacant(tile):
     occupied = nmmo.scripting.Observation.attribute(tile, Tile.NEnts)
     matl = nmmo.scripting.Observation.attribute(tile, Tile.Index)
 
-    return matl in material.Habitable and not occupied
+    return matl in material.Habitable and not occupied # material.Habitable: grass, scrub, forest
 
 
 def random(config, ob, actions):
@@ -46,7 +45,7 @@ def towards(direction):
 
 def pathfind(config, ob, actions, rr, cc):
     direction = aStar(config, ob, actions, rr, cc)
-    direction = towards(direction)
+    direction = towards(direction) # turn the direction tuple to action.Direction object
     actions[nmmo.action.Move] = {nmmo.action.Direction: direction}
 
 
@@ -84,7 +83,8 @@ def explore(config, ob, actions, spawnR, spawnC):
     agent = ob.agent
     r = nmmo.scripting.Observation.attribute(agent, Entity.R)
     c = nmmo.scripting.Observation.attribute(agent, Entity.C)
-
+    
+    # TODO: more efficient exploration
     centR, centC = sz // 2, sz // 2
     vR, vC = centR - spawnR, centC - spawnC
 
@@ -103,6 +103,7 @@ def evade(config, ob, actions, attacker):
     gr = nmmo.scripting.Observation.attribute(attacker, Entity.R)
     gc = nmmo.scripting.Observation.attribute(attacker, Entity.C)
 
+    # TODO: intelligent evade from attacker
     rr, cc = (2 * sr - gr, 2 * sc - gc)
 
     pathfind(config, ob, actions, rr, cc)
@@ -132,7 +133,7 @@ def forageDijkstra(config, ob, actions, food_max, water_max, cutoff=100):
         if cutoff <= 0:
             break
 
-        cur = queue.get()
+        cur = queue.get() # remove and return an item from the queue
         for nxt in adjacentPos(cur):
             if nxt in backtrace:
                 continue
@@ -154,6 +155,7 @@ def forageDijkstra(config, ob, actions, food_max, water_max, cutoff=100):
             if matl == material.Forest.index:
                 food = min(food + food_max // 2, food_max)
             for pos in adjacentPos(nxt):
+                # as long as nxt tile has ajacent water
                 if not inSight(*pos, vision):
                     continue
 
@@ -176,6 +178,7 @@ def forageDijkstra(config, ob, actions, food_max, water_max, cutoff=100):
             backtrace[nxt] = cur
 
     while goal in backtrace and backtrace[goal] != start:
+        # backtrace from goal to start's next
         goal = backtrace[goal]
 
     direction = towards(goal)

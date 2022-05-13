@@ -1,9 +1,7 @@
 import numpy as np
-
 import nmmo
-
-from ijcai2022nmmo.scripted import utils
-
+#from ijcai2022nmmo.scripted import utils
+import scripted.utils as utils
 
 def closestTarget(config, ob):
     shortestDist = np.inf
@@ -17,12 +15,15 @@ def closestTarget(config, ob):
     start = (sr, sc)
 
     for target in ob.agents:
-        exists = nmmo.scripting.Observation.attribute(target, Entity.Self)
+        exists = nmmo.scripting.Observation.attribute(target, Entity.Self) # Entity.Self indicates whether its valuable information
         if not exists:
             continue
 
         tr = nmmo.scripting.Observation.attribute(target, Entity.R)
         tc = nmmo.scripting.Observation.attribute(target, Entity.C)
+
+        # check if its NPC
+        entityID = nmmo.scripting.Observation.attribute(target, Entity.ID)
 
         goal = (tr, tc)
         dist = utils.l1(start, goal)
