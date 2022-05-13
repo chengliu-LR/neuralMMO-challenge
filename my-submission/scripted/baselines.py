@@ -46,10 +46,13 @@ class Scripted(nmmo.Agent):
 
     def evade(self):
         '''Target and path away from an attacker'''
-        move.evade(self.config, self.ob, self.actions, self.attacker)
         self.target = self.attacker
         self.targetID = self.attackerID
         self.targetDist = self.attackerDist
+
+        # freeze and then evade
+        attack.target(self.config, self.actions, nmmo.action.Mage, self.targetID)
+        move.evade(self.config, self.ob, self.actions, self.attacker)
 
     def attack(self):
         '''Attack the current target'''
@@ -112,7 +115,7 @@ class Scripted(nmmo.Agent):
             self.closest, nmmo.Serialized.Entity.Population)
 
         # this can be an aggresive attack strategy
-        if targLevel <= selfLevel <= 5 or selfLevel >= targLevel or targPopulation == -1: # attack passive NPC
+        if targLevel <= selfLevel <= 5 or selfLevel >= targLevel-3 or targPopulation == -1: # attack passive NPC
             self.target = self.closest
             self.targetID = self.closestID
             self.targetDist = self.closestDist
@@ -122,8 +125,20 @@ class Scripted(nmmo.Agent):
         self.scan_agents()
 
         if self.attacker is not None:
-            self.evade()
-            return
+            selfLevel = scripting.Observation.attribute(
+                self.ob.agent, nmmo.Serialized.Entity.Level)
+            attackerLevel = scripting.Observation.attribute(
+                self.attacker, nmmo.Serialized.Entity.Level)
+
+            if attackerLevel <= selfLevel <= 5 or selfLevel >= attackerLevel:
+                self.target = self.attacker
+                self.targetID = self.attackerID
+                self.targetDist = self.attackerDist
+                return
+
+            else:
+                self.evade()
+                return
 
         if self.forage_criterion or not explore:
             self.forage()
