@@ -26,8 +26,9 @@ class Scripted(nmmo.Agent):
     def forage_criterion(self) -> bool:
         '''Return true if low on food or water'''
         # this parameter can be tuned
-        min_level = 6
-        return self.food <= min_level or self.water <= min_level
+        food_min_level = 0.8 * self.food_max
+        water_min_level = 0.8 * self.water_max
+        return self.food <= food_min_level or self.water <= water_min_level
 
     def forage(self):
         '''Min/max food and water using Dijkstra's algorithm'''
@@ -115,7 +116,8 @@ class Scripted(nmmo.Agent):
             self.closest, nmmo.Serialized.Entity.Population)
 
         # this can be an aggresive attack strategy
-        if targLevel <= selfLevel <= 5 or selfLevel >= targLevel-3 or targPopulation == -1: # attack passive NPC
+        if targLevel <= selfLevel <= 5 or selfLevel >= targLevel or (targPopulation == -1 # attack passive NPC
+                                                                    and selfLevel >= targLevel - 10):
             self.target = self.closest
             self.targetID = self.closestID
             self.targetDist = self.closestDist
@@ -131,6 +133,7 @@ class Scripted(nmmo.Agent):
                 self.attacker, nmmo.Serialized.Entity.Level)
 
             if attackerLevel <= selfLevel <= 5 or selfLevel >= attackerLevel:
+                # if the level is higher than attacker
                 self.target = self.attacker
                 self.targetID = self.attackerID
                 self.targetDist = self.attackerDist

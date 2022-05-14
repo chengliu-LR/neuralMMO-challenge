@@ -244,9 +244,8 @@ def aStar(config, ob, actions, rr, cc, cutoff=100):
                 priority = newCost + heuristic
 
                 # Compute approximate solution
-                if heuristic < closestHeuristic or (
-                        heuristic == closestHeuristic
-                        and priority < closestCost):
+                if heuristic < closestHeuristic or (heuristic == closestHeuristic
+                                                    and priority < closestCost):
                     closestPos = nxt
                     closestHeuristic = heuristic
                     closestCost = priority
