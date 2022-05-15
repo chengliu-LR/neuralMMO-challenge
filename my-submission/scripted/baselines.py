@@ -260,7 +260,8 @@ class Protoss(Scripted):
 
         self.adaptive_control_and_targeting()
 
-        self.style = nmmo.action.Range
+        #self.style = nmmo.action.Range
+        self.select_combat_style()
         self.attack()
 
         return self.actions
