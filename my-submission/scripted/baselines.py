@@ -144,7 +144,7 @@ class Scripted(nmmo.Agent):
             self.closest, nmmo.Serialized.Entity.Population)
 
         # this can be an aggresive attack strategy
-        if targLevel <= selfLevel <= 5 or selfLevel > targLevel  or (
+        if targLevel <= selfLevel <= 5 or selfLevel >= targLevel or (
             targPopulation == -1 and selfLevel >= targLevel - 5) or (   # passive npc
             targPopulation == -2 and selfLevel >= targLevel + 1) or (   # neutral npc
             targPopulation == -3 and selfLevel >= targLevel + 5):       # hostile npc
