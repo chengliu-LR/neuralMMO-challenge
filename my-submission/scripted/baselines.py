@@ -22,6 +22,9 @@ class Scripted(nmmo.Agent):
         self.spawnR = None
         self.spawnC = None
 
+        # for protoss combat state machine
+        self.frozen_count = 0
+
     @property
     def forage_criterion(self) -> bool:
         '''Return true if low on food or water'''
@@ -45,6 +48,7 @@ class Scripted(nmmo.Agent):
         '''Return true if agent is not occupied with a high-priority action'''
         return not self.forage_criterion and self.attacker is None
 
+
     def evade(self):
         '''Target and path away from an attacker'''
         self.target = self.attacker
@@ -54,6 +58,7 @@ class Scripted(nmmo.Agent):
         # freeze and then evade
         attack.target(self.config, self.actions, nmmo.action.Mage, self.targetID)
         move.evade(self.config, self.ob, self.actions, self.attacker)
+
 
     def attack(self):
         '''Attack the current target'''
@@ -78,6 +83,29 @@ class Scripted(nmmo.Agent):
             self.style = nmmo.action.Range
         else:
             self.style = nmmo.action.Mage
+
+
+    def protoss_combat(self):
+        '''An more reasonable combat style selection'''
+        if self.target is None:
+            return
+
+        frozen = scripting.Observation.attribute(
+            self.target, nmmo.Serialized.Entity.Freeze)
+        if not (frozen and self.frozen_count >= 1):
+            self.style = nmmo.action.Mage
+            self.frozen_count = 3
+            return
+        elif self.targetDist <= self.config.COMBAT_MELEE_REACH:
+            self.style = nmmo.action.Melee
+        elif self.targetDist <= self.config.COMBAT_RANGE_REACH:
+            self.style = nmmo.action.Range
+        else:
+            self.style = nmmo.action.Mage
+
+        self.frozen_count -= 1
+        self.frozen_count = max(0, self.frozen_count)
+
 
     def scan_agents(self):
         '''Scan the nearby area for agents'''
@@ -261,7 +289,8 @@ class Protoss(Scripted):
         self.adaptive_control_and_targeting()
 
         #self.style = nmmo.action.Range
-        self.select_combat_style()
+        #self.select_combat_style()
+        self.protoss_combat()
         self.attack()
 
         return self.actions
