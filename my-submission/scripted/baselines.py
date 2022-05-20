@@ -67,11 +67,9 @@ class Scripted(nmmo.Agent):
             attack.target(self.config, self.actions, self.style, self.targetID)
 
     
-    def chase(self):
-        '''Chase the target agent'''
-        if self.target is not None:
-            assert self.targetID is not None
-            move.chase(self.config, self.ob, self.actions, self.target)
+    def hit_and_run(self):
+        '''Hit and run to dynamicly attack & evade from the target agent'''
+        pass
 
 
     def select_combat_style(self):
@@ -104,8 +102,7 @@ class Scripted(nmmo.Agent):
             self.style = nmmo.action.Range
         else:
             self.style = nmmo.action.Mage
-        
-        self.chase()
+
         self.frozen_count -= 1
         self.frozen_count = max(0, self.frozen_count)
 
@@ -115,8 +112,6 @@ class Scripted(nmmo.Agent):
         self.closest, self.closestDist = attack.closestTarget(
             self.config, self.ob)
         self.attacker, self.attackerDist = attack.attacker(
-            self.config, self.ob)
-        self.teamateAttacker, self.teamateAttackerDist = attack.teamateAttacker(
             self.config, self.ob)
 
         self.closestID = None
@@ -128,11 +123,6 @@ class Scripted(nmmo.Agent):
         if self.attacker is not None:
             self.attackerID = scripting.Observation.attribute(
                 self.attacker, nmmo.Serialized.Entity.ID)
-
-        self.teamateAttackerID = None
-        if self.teamateAttacker is not None:
-            self.teamateAttackerID = scripting.Observation.attribute(
-                self.teamateAttacker, nmmo.Serialized.Entity.ID)
 
         self.style = None
         self.target = None
@@ -154,9 +144,8 @@ class Scripted(nmmo.Agent):
             self.closest, nmmo.Serialized.Entity.Population)
 
         # this can be an aggresive attack strategy
-        #(>=targLevel & selfLevel >= targLevel - 10) modified
-        if targLevel <= selfLevel <= 5 or selfLevel > targLevel or (targPopulation == -1 # attack passive NPC
-                                                                    and selfLevel >= targLevel - 5):
+        if targLevel <= selfLevel <= 5 or selfLevel >= targLevel or (targPopulation == -1 # attack passive NPC
+                                                                    and selfLevel >= targLevel - 10):
             self.target = self.closest
             self.targetID = self.closestID
             self.targetDist = self.closestDist
@@ -165,14 +154,6 @@ class Scripted(nmmo.Agent):
         '''Balanced foraging, evasion, and exploration'''
         self.scan_agents()
 
-        # help your teamates first
-        if self.teamateAttacker is not None:
-            self.target = self.teamateAttacker
-            self.targetID = self.teamateAttackerID
-            self.targetDist = self.teamateAttackerDist
-            return
-
-        # check if zi shen nan bao
         if self.attacker is not None:
             selfLevel = scripting.Observation.attribute(
                 self.ob.agent, nmmo.Serialized.Entity.Level)
@@ -189,7 +170,6 @@ class Scripted(nmmo.Agent):
             else:
                 self.evade()
                 return
-        
 
         if self.forage_criterion or not explore:
             self.forage()
