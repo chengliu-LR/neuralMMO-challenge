@@ -22,6 +22,8 @@ class ScriptedTeam(Team):
 
     def reset(self):
         assert self.agent_klass
+        
+        # self.agents = [, ... ,] can be listed individually for future diverse agent team
         self.agents = [
             self.agent_klass(self.env_config, i) # initialize agents here
             for i in range(self.env_config.TEAM_SIZE)
