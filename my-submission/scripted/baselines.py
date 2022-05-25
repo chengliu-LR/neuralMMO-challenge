@@ -1,7 +1,8 @@
 import nmmo
 from nmmo import scripting
 from nmmo.lib import colors
-from scripted import attack, move
+import scripted.attack as attack
+import scripted.move as move
 
 class Scripted(nmmo.Agent):
     '''Template class for scripted models.
@@ -41,6 +42,12 @@ class Scripted(nmmo.Agent):
     def explore(self):
         '''Route away from spawn'''
         move.explore(self.config, self.ob, self.actions, self.spawnR,
+                     self.spawnC)
+
+
+    def explore_square(self):
+        '''Rout away in square from spawn'''
+        move.explore_square(self.config, self.ob, self.actions, self.spawnR,
                      self.spawnC)
 
     @property
@@ -129,6 +136,7 @@ class Scripted(nmmo.Agent):
         self.targetID = None
         self.targetDist = None
 
+
     def target_weak(self):
         '''Target the nearest agent if it is weak'''
         # TODO: this does not make sense because you need to target 
@@ -178,9 +186,11 @@ class Scripted(nmmo.Agent):
         if self.forage_criterion or not explore:
             self.forage()
         else:
-            self.explore()
+            #self.explore()
+            self.explore_square()
 
         self.target_weak()
+
 
     def __call__(self, obs):
         '''Process observations and return actions
@@ -210,6 +220,7 @@ class Scripted(nmmo.Agent):
             self.spawnC = scripting.Observation.attribute(
                 agent, nmmo.Serialized.Entity.C)
 
+
     @property
     def targets(self):
         return [
@@ -219,68 +230,6 @@ class Scripted(nmmo.Agent):
                 for target in self.ob.agents # ob.agents = scripting.Observation['Entity']['Continuous']
             ] if x
         ] # return target ID of observable agents
-
-
-class Random(Scripted):
-    name = 'Random_'
-    '''Moves randomly'''
-    def __call__(self, obs):
-        super().__call__(obs)
-
-        move.random(self.config, self.ob, self.actions)
-        return self.actions
-
-
-class Meander(Scripted):
-    name = 'Meander_'
-    '''Moves randomly on safe terrain'''
-    def __call__(self, obs):
-        super().__call__(obs)
-
-        move.meander(self.config, self.ob, self.actions)
-        return self.actions
-
-
-class ForageNoExplore(Scripted):
-    '''Forages using Dijkstra's algorithm'''
-    name = 'ForageNE_'
-
-    def __call__(self, obs):
-        super().__call__(obs)
-
-        self.forage()
-
-        return self.actions
-
-
-class Forage(Scripted):
-    '''Forages using Dijkstra's algorithm and actively explores'''
-    name = 'Forage_'
-
-    def __call__(self, obs):
-        super().__call__(obs)
-
-        if self.forage_criterion:
-            self.forage()
-        else:
-            self.explore()
-
-        return self.actions
-
-
-class CombatNoExplore(Scripted):
-    '''Forages using Dijkstra's algorithm and fights nearby agents'''
-    name = 'CombatNE_'
-
-    def __call__(self, obs):
-        super().__call__(obs)
-
-        self.adaptive_control_and_targeting(explore=False)
-
-        self.style = nmmo.action.Range
-        self.attack()
-
-        return self.actions
 
 
 class Protoss(Scripted):
@@ -295,22 +244,6 @@ class Protoss(Scripted):
         #self.style = nmmo.action.Range
         #self.select_combat_style()
         self.protoss_combat()
-        self.attack()
-
-        return self.actions
-
-
-class CombatTribrid(Scripted):
-    name = 'CombatTri_'
-    '''Forages, fights, and explores.
-
-    Uses a slightly more sophisticated attack routine'''
-    def __call__(self, obs):
-        super().__call__(obs)
-
-        self.adaptive_control_and_targeting()
-
-        self.select_combat_style()
         self.attack()
 
         return self.actions

@@ -94,6 +94,67 @@ def explore(config, ob, actions, spawnR, spawnC):
     pathfind(config, ob, actions, rr, cc)
 
 
+def explore_square(config, ob, actions, spawnR, spawnC):
+    '''explore in counter-clockwise or clockwise direction'''
+    entID = nmmo.scripting.Observation.attribute(ob.agent, nmmo.Serialized.Entity.ID)
+    pop = nmmo.scripting.Observation.attribute(ob.agent, nmmo.Serialized.Entity.Population)
+    r = nmmo.scripting.Observation.attribute(ob.agent, nmmo.Serialized.Entity.R)
+    c = nmmo.scripting.Observation.attribute(ob.agent, nmmo.Serialized.Entity.C)
+
+    inSquadOne = utils.inSquadOne(entID, pop)
+    rr, cc = squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne)
+
+    pathfind(config, ob, actions, rr, cc)
+
+
+def squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne):
+    vision = config.NSTIM
+
+    UP_LEFT = (16, 16)
+    UP_RIGHT = (16, 128)
+    DOWN_LEFT = (128, 16)
+    DOWN_RIGHT = (128, 128)
+
+    clockwise = [UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT]
+
+    # initial position
+    if spawnC <= config.TERRAIN_BORDER:
+        if inSquadOne:
+            targR, targC = UP_LEFT
+        elif not inSquadOne:
+            targR, targC = DOWN_LEFT
+    
+    if spawnC >= config.TERRAIN_BORDER + config.TERRAIN_CENTER:
+        if inSquadOne:
+            targR, targC = UP_RIGHT
+        elif not inSquadOne:
+            targR, targC = DOWN_RIGHT
+    
+    if spawnR <= config.TERRAIN_BORDER:
+        if inSquadOne:
+            targR, targC = UP_LEFT
+        elif not inSquadOne:
+            targR, targC = UP_RIGHT
+    
+    if spawnR >= config.TERRAIN_BORDER + config.TERRAIN_CENTER:
+        if inSquadOne:
+            targR, targC = DOWN_LEFT
+        elif not inSquadOne:
+            targR, targC = DOWN_RIGHT
+
+
+    vR, vC = targR - spawnR, targC - spawnC
+    mmag = max(abs(vR), abs(vC))
+    rr = int(np.round(vision * vR / mmag))
+    cc = int(np.round(vision * vC / mmag))
+
+    return rr, cc
+
+
+def goal_reached(start, goal, bar=2):
+    return utils.lInfty(start, goal) <= bar
+
+
 def evade(config, ob, actions, attacker):
     Entity = nmmo.Serialized.Entity
 
@@ -114,9 +175,8 @@ def forageDijkstra(config, ob, actions, food_max, water_max, cutoff=100):
     Entity = nmmo.Serialized.Entity
     Tile = nmmo.Serialized.Tile
 
-    agent = ob.agent
-    food = nmmo.scripting.Observation.attribute(agent, Entity.Food)
-    water = nmmo.scripting.Observation.attribute(agent, Entity.Water)
+    food = nmmo.scripting.Observation.attribute(ob.agent, Entity.Food)
+    water = nmmo.scripting.Observation.attribute(ob.agent, Entity.Water)
 
     best = -1000
     start = (0, 0)

@@ -46,3 +46,11 @@ def vacant(tile):
     orerock = material.Orerock.index
 
     return matl in (grass, scrub, forest) and not occupied
+
+def inSquadOne(entID, pop):
+    '''In squad 1'''
+    return entID % 8 <= 4 and entID // 8 == pop
+
+def inSquadTwo(entID, pop):
+    '''In squad 2'''
+    return entID % 8 > 4 or entID // 8 == pop + 1

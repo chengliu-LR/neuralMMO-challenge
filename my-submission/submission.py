@@ -4,7 +4,6 @@ from typing import Dict, Type, List
 from ijcai2022nmmo.evaluation.team import Team
 import scripted.baselines as baselines
 
-
 class ScriptedTeam(Team):
     agent_klass: Type = None
     agents: List[baselines.Scripted]
@@ -40,32 +39,8 @@ class ScriptedTeam(Team):
         return actions
 
 
-class RandomTeam(ScriptedTeam):
-    agent_klass = baselines.Random
-
-
-class MeanderTeam(ScriptedTeam):
-    agent_klass = baselines.Meander
-
-
-class ForageNoExploreTeam(ScriptedTeam):
-    agent_klass = baselines.ForageNoExplore
-
-
-class ForageTeam(ScriptedTeam):
-    agent_klass = baselines.Forage
-
-
 class rickyProtoss(ScriptedTeam):
     agent_klass = baselines.Protoss
-
-
-class CombatNoExploreTeam(ScriptedTeam):
-    agent_klass = baselines.CombatNoExplore
-
-
-class CombatTribridTeam(ScriptedTeam):
-    agent_klass = baselines.CombatTribrid
 
 
 class Submission:
