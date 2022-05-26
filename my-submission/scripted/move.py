@@ -40,13 +40,15 @@ def towards(direction):
     elif direction == (0, 1):
         return nmmo.action.East
     else:
-        return rand.choice(nmmo.action.Direction.edges)
+        # return rand.choice(nmmo.action.Direction.edges) # Possible reason for jumping into Lava
+        return None
 
 
 def pathfind(config, ob, actions, rr, cc):
     direction = aStar(config, ob, actions, rr, cc)
     direction = towards(direction) # turn the direction tuple to action.Direction object
-    actions[nmmo.action.Move] = {nmmo.action.Direction: direction}
+    if direction is not None:
+        actions[nmmo.action.Move] = {nmmo.action.Direction: direction}
 
 
 def meander(config, ob, actions):

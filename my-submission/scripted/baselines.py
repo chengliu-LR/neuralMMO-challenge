@@ -186,8 +186,8 @@ class Scripted(nmmo.Agent):
         if self.forage_criterion or not explore:
             self.forage()
         else:
-            self.explore()
-            #self.explore_square()
+            #self.explore()
+            self.explore_square()
 
         self.target_weak()
 

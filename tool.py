@@ -152,7 +152,7 @@ def rollout(submission_path: str, startby: str, registry: str):
 
     class Config(CompetitionConfig):
         NMAPS = 1
-        SAVE_REPLAY = "replays/rickyProtoss"
+        SAVE_REPLAY = "replays/PVE_LOCAL"
     
     config = Config()
 
