@@ -244,7 +244,8 @@ def forageDijkstra(config, ob, actions, food_max, water_max, cutoff=100):
         goal = backtrace[goal]
 
     direction = towards(goal)
-    actions[nmmo.action.Move] = {nmmo.action.Direction: direction}
+    if direction is not None:
+        actions[nmmo.action.Move] = {nmmo.action.Direction: direction}
 
 
 def aStar(config, ob, actions, rr, cc, cutoff=100):
