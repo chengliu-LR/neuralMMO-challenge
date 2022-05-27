@@ -113,10 +113,10 @@ def explore_square(config, ob, actions, spawnR, spawnC, current_target):
 def squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne, current_target):
     vision = config.NSTIM
 
-    UP_LEFT = (16, 16)
-    UP_RIGHT = (16, 128)
-    DOWN_LEFT = (128, 16)
-    DOWN_RIGHT = (128, 128)
+    UP_LEFT = (32, 32)
+    UP_RIGHT = (32, 112)
+    DOWN_LEFT = (112, 32)
+    DOWN_RIGHT = (112, 112)
 
     targetsList = [UP_LEFT, DOWN_LEFT, DOWN_RIGHT, UP_RIGHT]
     spawnLeftBottom = utils.spawnLeftBottom(config, spawnR, spawnC)

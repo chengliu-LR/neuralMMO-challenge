@@ -27,7 +27,7 @@ class Scripted(nmmo.Agent):
         self.frozen_count = 0
 
         # for square exploration
-        self.current_target = None
+        self.current_target_point = None
 
     @property
     def forage_criterion(self) -> bool:
@@ -39,19 +39,18 @@ class Scripted(nmmo.Agent):
 
     def forage(self):
         '''Min/max food and water using Dijkstra's algorithm'''
-        move.forageDijkstra(self.config, self.ob, self.actions, self.food_max,
-                            self.water_max)
+        move.forageDijkstra(self.config, self.ob, self.actions, self.food_max, self.water_max)
 
     def explore(self):
         '''Route away from spawn'''
-        move.explore(self.config, self.ob, self.actions, self.spawnR,
-                     self.spawnC)
+        move.explore(self.config, self.ob, self.actions, self.spawnR, self.spawnC)
 
 
     def explore_square(self):
         '''Rout away in square from spawn'''
-        self.current_target = move.explore_square(self.config, self.ob, self.actions, self.spawnR,
-                                                  self.spawnC, self.current_target)
+        self.current_target_point = move.explore_square(self.config, self.ob, self.actions, self.spawnR,
+                                                  self.spawnC, self.current_target_point)
+
 
     @property
     def downtime(self):
@@ -115,6 +114,12 @@ class Scripted(nmmo.Agent):
 
         self.frozen_count -= 1
         self.frozen_count = max(0, self.frozen_count)
+
+
+    def protoss_hybrid_combat(self):
+        '''Hit with range and mage'''
+        if self.target is None:
+            return
 
 
     def scan_agents(self):
