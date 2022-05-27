@@ -96,7 +96,7 @@ def explore(config, ob, actions, spawnR, spawnC):
     pathfind(config, ob, actions, rr, cc)
 
 
-def explore_square(config, ob, actions, spawnR, spawnC):
+def explore_square(config, ob, actions, spawnR, spawnC, current_target):
     '''explore in counter-clockwise or clockwise direction'''
     entID = nmmo.scripting.Observation.attribute(ob.agent, nmmo.Serialized.Entity.ID)
     pop = nmmo.scripting.Observation.attribute(ob.agent, nmmo.Serialized.Entity.Population)
@@ -104,12 +104,13 @@ def explore_square(config, ob, actions, spawnR, spawnC):
     c = nmmo.scripting.Observation.attribute(ob.agent, nmmo.Serialized.Entity.C)
 
     inSquadOne = utils.inSquadOne(entID, pop)
-    rr, cc = squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne)
-
+    rr, cc, current_target = squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne, current_target)
     pathfind(config, ob, actions, rr, cc)
 
+    return current_target
 
-def squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne):
+
+def squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne, current_target):
     vision = config.NSTIM
 
     UP_LEFT = (16, 16)
@@ -117,43 +118,52 @@ def squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne):
     DOWN_LEFT = (128, 16)
     DOWN_RIGHT = (128, 128)
 
-    clockwise = [UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT]
+    targetsList = [UP_LEFT, DOWN_LEFT, DOWN_RIGHT, UP_RIGHT]
+    spawnLeftBottom = utils.spawnLeftBottom(config, spawnR, spawnC)
+    current_pos = (r, c)
 
-    # initial position
-    if spawnC <= config.TERRAIN_BORDER:
-        if inSquadOne:
-            targR, targC = UP_LEFT
-        elif not inSquadOne:
-            targR, targC = DOWN_LEFT
-    
-    if spawnC >= config.TERRAIN_BORDER + config.TERRAIN_CENTER:
-        if inSquadOne:
-            targR, targC = UP_RIGHT
-        elif not inSquadOne:
-            targR, targC = DOWN_RIGHT
-    
-    if spawnR <= config.TERRAIN_BORDER:
-        if inSquadOne:
-            targR, targC = UP_LEFT
-        elif not inSquadOne:
-            targR, targC = UP_RIGHT
-    
-    if spawnR >= config.TERRAIN_BORDER + config.TERRAIN_CENTER:
-        if inSquadOne:
-            targR, targC = DOWN_LEFT
-        elif not inSquadOne:
-            targR, targC = DOWN_RIGHT
+    if current_target is None:
+        # initial position
+        if spawnC <= config.TERRAIN_BORDER:
+            if inSquadOne:
+                targR, targC = UP_LEFT
+            elif not inSquadOne:
+                targR, targC = DOWN_LEFT
+        
+        if spawnC >= config.TERRAIN_BORDER + config.TERRAIN_CENTER:
+            if inSquadOne:
+                targR, targC = UP_RIGHT
+            elif not inSquadOne:
+                targR, targC = DOWN_RIGHT
+        
+        if spawnR <= config.TERRAIN_BORDER:
+            if inSquadOne:
+                targR, targC = UP_LEFT
+            elif not inSquadOne:
+                targR, targC = UP_RIGHT
+        
+        if spawnR >= config.TERRAIN_BORDER + config.TERRAIN_CENTER:
+            if inSquadOne:
+                targR, targC = DOWN_LEFT
+            elif not inSquadOne:
+                targR, targC = DOWN_RIGHT
 
+        current_target = (targR, targC)
 
+    else:
+        if goal_reached(current_pos, current_target):
+            current_target = utils.nextTarget(current_target, targetsList, inSquadOne, spawnLeftBottom)
+
+    targR, targC = current_target
     vR, vC = targR - spawnR, targC - spawnC
     mmag = max(abs(vR), abs(vC))
     rr = int(np.round(vision * vR / mmag))
     cc = int(np.round(vision * vC / mmag))
 
-    return rr, cc
+    return rr, cc, current_target
 
 
-def goal_reached(start, goal, bar=2):
+def goal_reached(start, goal, bar=4):
     return utils.lInfty(start, goal) <= bar
 
 

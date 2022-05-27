@@ -47,10 +47,37 @@ def vacant(tile):
 
     return matl in (grass, scrub, forest) and not occupied
 
+
 def inSquadOne(entID, pop):
     '''In squad 1'''
     return entID % 8 <= 4 and entID // 8 == pop
 
+
 def inSquadTwo(entID, pop):
     '''In squad 2'''
     return entID % 8 > 4 or entID // 8 == pop + 1
+
+
+def spawnLeftBottom(config, spawnR, spawnC):
+    if spawnC <= config.TERRAIN_BORDER or (
+        spawnR >= config.TERRAIN_BORDER + config.TERRAIN_CENTER):
+        return True
+    else:
+        return False
+
+
+def nextTarget(cur, targetsList, inSquadOne, spawnLeftBottom):
+    cur_index = targetsList.index(cur)
+    if inSquadOne:
+        if spawnLeftBottom:
+            next_index = cur_index - 1
+        else:
+            next_index = cur_index + 1
+    else:
+        if spawnLeftBottom:
+            next_index = cur_index + 1
+        else:
+            next_index = cur_index - 1
+    next_index = next_index % len(targetsList)
+    
+    return targetsList[next_index]

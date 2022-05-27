@@ -26,6 +26,9 @@ class Scripted(nmmo.Agent):
         # for protoss combat state machine
         self.frozen_count = 0
 
+        # for square exploration
+        self.current_target = None
+
     @property
     def forage_criterion(self) -> bool:
         '''Return true if low on food or water'''
@@ -47,8 +50,8 @@ class Scripted(nmmo.Agent):
 
     def explore_square(self):
         '''Rout away in square from spawn'''
-        move.explore_square(self.config, self.ob, self.actions, self.spawnR,
-                     self.spawnC)
+        self.current_target = move.explore_square(self.config, self.ob, self.actions, self.spawnR,
+                                                  self.spawnC, self.current_target)
 
     @property
     def downtime(self):
