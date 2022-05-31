@@ -74,6 +74,8 @@ class Scripted(nmmo.Agent):
         if self.target is not None:
             assert self.targetID is not None
             attack.target(self.config, self.actions, self.style, self.targetID)
+            #targetHealth = scripting.Observation.attribute(self.target, nmmo.Serialized.Entity.Health)
+            #print("target health ID {} and health {}\n".format(self.targetID, targetHealth))
 
     
     def hit_and_run(self):
@@ -147,8 +149,9 @@ class Scripted(nmmo.Agent):
 
     def target_weak(self):
         '''Target the nearest agent if it is weak'''
-        # TODO: this does not make sense because you need to target 
+        # TODO: this does not make sense because you need to target
         # at the most valuable agent rather than the nearest
+        # You can change it to a queue of potential targets
         if self.closest is None:
             return False
 
@@ -160,10 +163,10 @@ class Scripted(nmmo.Agent):
             self.closest, nmmo.Serialized.Entity.Population)
 
         # this can be an aggresive attack strategy
-        if targLevel <= selfLevel <= 5 or selfLevel >= targLevel or (
-            targPopulation == -1 and selfLevel >= targLevel - 5) or (   # passive npc
-            targPopulation == -2 and selfLevel >= targLevel + 1) or (   # neutral npc
-            targPopulation == -3 and selfLevel >= targLevel + 5):       # hostile npc
+        if selfLevel >= targLevel or (
+            targPopulation == -1 and selfLevel >= targLevel - 10) or (   # passive npc
+            #targPopulation == -2 and selfLevel >= targLevel + 0 ) or (   # neutral npc
+            targPopulation == -3 and selfLevel >= targLevel + 2):       # hostile npc
 
             self.target = self.closest
             self.targetID = self.closestID
@@ -194,8 +197,8 @@ class Scripted(nmmo.Agent):
         if self.forage_criterion or not explore:
             self.forage()
         else:
-            #self.explore()
-            self.explore_square()
+            self.explore()
+            #self.explore_square()
 
         self.target_weak()
 
@@ -250,8 +253,8 @@ class Protoss(Scripted):
         self.adaptive_control_and_targeting()
 
         #self.style = nmmo.action.Range
-        #self.select_combat_style()
-        self.protoss_combat()
+        self.select_combat_style()
+        #self.protoss_combat()
         self.attack()
 
         return self.actions

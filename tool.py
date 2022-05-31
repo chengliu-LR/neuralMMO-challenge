@@ -175,9 +175,10 @@ def rollout(submission_path: str, startby: str, registry: str):
         from ijcai2022nmmo import RollOut, scripted
         teams = []
         teams.append(team)
-        teams.extend([scripted.CombatTeam(f"Combat-{i}", config) for i in range(3)])
-        teams.extend([scripted.ForageTeam(f"Forage-{i}", config) for i in range(5)])
-        teams.extend([scripted.RandomTeam(f"Random-{i}", config) for i in range(7)])
+        # change the local evaluation to pure combat teams
+        teams.extend([scripted.CombatTeam(f"Combat1-{i}", config) for i in range(3)])
+        teams.extend([scripted.CombatTeam(f"Combat2-{i}", config) for i in range(5)])
+        teams.extend([scripted.CombatTeam(f"Combat3-{i}", config) for i in range(7)])
         ro = RollOut(config, teams, parallel=True, show_progress=True)
         ro.run(n_timestep=1024, n_episode=1, render=False)
     except:

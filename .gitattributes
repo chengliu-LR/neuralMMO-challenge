@@ -6,3 +6,7 @@ replays/PVE_STAGE2.replay filter=lfs diff=lfs merge=lfs -text
 replays/PVE_STAGE2.json filter=lfs diff=lfs merge=lfs -text
 replays/PVE_LOCAL.replay filter=lfs diff=lfs merge=lfs -text
 replays/PVE_LOCAL.json filter=lfs diff=lfs merge=lfs -text
+replays/PVE_STAGE3.replay filter=lfs diff=lfs merge=lfs -text
+replays/Replay-186782-30dyawoo2307me64p/PVE_STAGE1.replay filter=lfs diff=lfs merge=lfs -text
+replays/Replay-186782-30dyawoo2307me64p/PVE_STAGE2.replay filter=lfs diff=lfs merge=lfs -text
+replays/PVE_STAGE3.json filter=lfs diff=lfs merge=lfs -text
