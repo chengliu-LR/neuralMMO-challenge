@@ -187,7 +187,7 @@ class Scripted(nmmo.Agent):
             attackerLevel = scripting.Observation.attribute(
                 self.attacker, nmmo.Serialized.Entity.Level)
 
-            if attackerLevel <= selfLevel <= 5 or selfLevel >= attackerLevel:
+            if attackerLevel <= selfLevel <= 3 or selfLevel >= attackerLevel - 3:
                 # if the level is higher than attacker
                 self.target = self.attacker
                 self.targetID = self.attackerID
