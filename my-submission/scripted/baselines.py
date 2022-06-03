@@ -43,7 +43,7 @@ class Scripted(nmmo.Agent):
 
     def explore(self):
         '''Route away from spawn'''
-        move.explore(self.config, self.ob, self.actions, self.spawnR, self.spawnC)
+        self.current_target_point = move.explore(self.config, self.ob, self.actions, self.spawnR, self.spawnC)
 
 
     def explore_square(self):
@@ -51,6 +51,9 @@ class Scripted(nmmo.Agent):
         self.current_target_point = move.explore_square(self.config, self.ob, self.actions, self.spawnR,
                                                   self.spawnC, self.current_target_point)
 
+    def explore_hybrid(self):
+        self.current_target_point = move.explore_hybrid(self.config, self.ob, self.actions, self.spawnR,
+                                                self.spawnC, self.current_target_point)
 
     @property
     def downtime(self):
@@ -198,7 +201,7 @@ class Scripted(nmmo.Agent):
             self.forage()
         else:
             #self.explore()
-            self.explore_square()
+            self.explore_hybrid()
 
         self.target_weak()
 

@@ -76,7 +76,24 @@ def meander(config, ob, actions):
     actions[nmmo.action.Move] = {nmmo.action.Direction: direction}
 
 
-def explore(config, ob, actions, spawnR, spawnC):
+def explore_hybrid(config, ob, actions, spawnR, spawnC, current_target):
+    vision = config.NSTIM
+    sz = config.TERRAIN_SIZE
+    Entity = nmmo.Serialized.Entity
+    Tile = nmmo.Serialized.Tile
+    agent = ob.agent
+    r = nmmo.scripting.Observation.attribute(agent, Entity.R)
+    c = nmmo.scripting.Observation.attribute(agent, Entity.C)
+    threshold = int(0.6 * sz / 2)
+    if not utils.inInnerLoop(config, r, c, threshold):
+        cur_tar = explore(config, ob, actions, spawnR, spawnC)
+    else:
+        cur_tar = explore_square(config, ob, actions, spawnR, spawnC, current_target)
+
+    return cur_tar
+
+
+def explore(config, ob, actions, spawnR, spawnC, current_target):
     vision = config.NSTIM
     sz = config.TERRAIN_SIZE
     Entity = nmmo.Serialized.Entity
@@ -95,6 +112,8 @@ def explore(config, ob, actions, spawnR, spawnC):
     cc = int(np.round(vision * vC / mmag))
     pathfind(config, ob, actions, rr, cc)
 
+    return current_target
+
 
 def explore_square(config, ob, actions, spawnR, spawnC, current_target):
     '''explore in counter-clockwise or clockwise direction'''
@@ -104,10 +123,10 @@ def explore_square(config, ob, actions, spawnR, spawnC, current_target):
     c = nmmo.scripting.Observation.attribute(ob.agent, nmmo.Serialized.Entity.C)
 
     inSquadOne = utils.inSquadOne(entID, pop)
-    rr, cc, current_target = squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne, current_target)
+    rr, cc, cur_tar = squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne, current_target)
     pathfind(config, ob, actions, rr, cc)
 
-    return current_target
+    return cur_tar
 
 
 def squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne, current_target):
@@ -166,7 +185,7 @@ def squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne, current_
     return rr, cc, current_target
 
 
-def goal_reached(start, goal, bar=4):
+def goal_reached(start, goal, bar=10):
     return utils.lInfty(start, goal) <= bar
 
 

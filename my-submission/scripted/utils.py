@@ -81,3 +81,12 @@ def nextTarget(cur, targetsList, inSquadOne, spawnLeftBottom):
     next_index = next_index % len(targetsList)
     
     return targetsList[next_index]
+
+def inInnerLoop(config, r, c, threshold):
+    sz = config.TERRAIN_SIZE
+    centR, centC = sz // 2, sz // 2
+    pos = (r, c)
+    if l2(pos, (centR, centC)) <= threshold:
+        return True
+    else:
+        return False
