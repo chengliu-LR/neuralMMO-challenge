@@ -187,7 +187,7 @@ class Scripted(nmmo.Agent):
             attackerLevel = scripting.Observation.attribute(
                 self.attacker, nmmo.Serialized.Entity.Level)
 
-            if attackerLevel <= selfLevel <= 3 or selfLevel >= attackerLevel - 3:
+            if attackerLevel <= selfLevel <= 3 or (selfLevel >= attackerLevel - 3 and selfLevel >= 3):
                 # if the level is higher than attacker
                 self.target = self.attacker
                 self.targetID = self.attackerID
@@ -257,8 +257,8 @@ class Protoss(Scripted):
         self.adaptive_control_and_targeting()
 
         #self.style = nmmo.action.Range
-        self.select_combat_style()
-        #self.protoss_combat()
+        #self.select_combat_style()
+        self.protoss_combat()
         self.attack()
 
         return self.actions
