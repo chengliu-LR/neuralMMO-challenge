@@ -33,8 +33,8 @@ class Scripted(nmmo.Agent):
     def forage_criterion(self) -> bool:
         '''Return true if low on food or water'''
         # this parameter can be tuned
-        food_min_level = 0.7 * self.food_max
-        water_min_level = 0.7 * self.water_max
+        food_min_level = 0.8 * self.food_max
+        water_min_level = 0.8 * self.water_max
         return self.food <= food_min_level or self.water <= water_min_level
 
     def forage(self):
@@ -43,7 +43,8 @@ class Scripted(nmmo.Agent):
 
     def explore(self):
         '''Route away from spawn'''
-        self.current_target_point = move.explore(self.config, self.ob, self.actions, self.spawnR, self.spawnC)
+        self.current_target_point = move.explore(self.config, self.ob, self.actions, self.spawnR,
+                                            self.spawnC, self.current_target_point)
 
 
     def explore_square(self):
@@ -168,8 +169,8 @@ class Scripted(nmmo.Agent):
         # this can be an aggresive attack strategy
         if selfLevel >= targLevel or (
             targPopulation == -1 and selfLevel >= targLevel - 10) or (   # passive npc
-            #targPopulation == -2 and selfLevel >= targLevel + 0 ) or (   # neutral npc
-            targPopulation == -3 and selfLevel >= targLevel + 2):       # hostile npc
+            targPopulation == -2 and selfLevel >= targLevel - 5) or (   # neutral npc
+            targPopulation == -3 and selfLevel >= targLevel - 2):       # hostile npc
 
             self.target = self.closest
             self.targetID = self.closestID
