@@ -167,14 +167,22 @@ class Scripted(nmmo.Agent):
             self.closest, nmmo.Serialized.Entity.Population)
 
         # this can be an aggresive attack strategy
-        if selfLevel >= targLevel or (
-            targPopulation == -1 and selfLevel >= targLevel - 10) or (   # passive npc
-            targPopulation == -2 and selfLevel >= targLevel - 5) or (   # neutral npc
-            targPopulation == -3 and selfLevel >= targLevel - 2):       # hostile npc
+        # if selfLevel >= targLevel or (
+        #     targPopulation == -1 and selfLevel >= targLevel - 10) or (   # passive npc
+        #     targPopulation == -2 and selfLevel >= targLevel - 5) or (   # neutral npc
+        #     targPopulation == -3 and selfLevel >= targLevel - 2):       # hostile npc
 
+        #     self.target = self.closest
+        #     self.targetID = self.closestID
+        #     self.targetDist = self.closestDist
+        if selfLevel >= targLevel - 2 or self.is_npc(targPopulation):
             self.target = self.closest
             self.targetID = self.closestID
             self.targetDist = self.closestDist
+
+
+    def is_npc(self, targPop):
+        return targPop == -1 or targPop == -2 or targPop == -3
 
 
     def adaptive_control_and_targeting(self, explore=True):
