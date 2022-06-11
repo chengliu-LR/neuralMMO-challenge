@@ -33,8 +33,8 @@ class Scripted(nmmo.Agent):
     def forage_criterion(self) -> bool:
         '''Return true if low on food or water'''
         # this parameter can be tuned
-        food_min_level = 0.8 * self.food_max
-        water_min_level = 0.8 * self.water_max
+        food_min_level = 0.75 * self.food_max
+        water_min_level = 0.75 * self.water_max
         return self.food <= food_min_level or self.water <= water_min_level
 
     def forage(self):
@@ -209,8 +209,8 @@ class Scripted(nmmo.Agent):
         if self.forage_criterion or not explore:
             self.forage()
         else:
-            self.explore()
-            #self.explore_hybrid()
+            #self.explore()
+            self.explore_hybrid()
 
         self.target_weak()
 
