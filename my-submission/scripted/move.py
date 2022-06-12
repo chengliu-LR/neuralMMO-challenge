@@ -132,8 +132,8 @@ def explore_square(config, ob, actions, spawnR, spawnC, current_target):
 def squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne, current_target):
     vision = config.NSTIM
     
-    LOWER_BOUND = 24
-    UPPER_BOUND = 120
+    LOWER_BOUND = 32
+    UPPER_BOUND = 114
 
     UP_LEFT = (LOWER_BOUND, LOWER_BOUND)
     UP_RIGHT = (LOWER_BOUND, UPPER_BOUND)
