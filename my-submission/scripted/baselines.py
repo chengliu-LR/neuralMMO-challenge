@@ -210,14 +210,7 @@ class Scripted(nmmo.Agent):
             self.forage()
         else:
             #self.explore()
-            if self.target is not None:
-                targPopulation = scripting.Observation.attribute(
-                    self.target, nmmo.Serialized.Entity.Population)
-
-                if not self.is_npc(targPopulation):
-                    self.explore_hybrid()
-            else:
-                self.explore_hybrid()
+            self.explore_hybrid()
 
         self.target_weak()
 
