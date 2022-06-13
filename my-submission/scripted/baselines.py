@@ -33,8 +33,8 @@ class Scripted(nmmo.Agent):
     def forage_criterion(self) -> bool:
         '''Return true if low on food or water'''
         # this parameter can be tuned
-        food_min_level = 0.86 * self.food_max
-        water_min_level = 0.86 * self.water_max
+        food_min_level = 0.8 * self.food_max
+        water_min_level = 0.8 * self.water_max
         return self.food <= food_min_level or self.water <= water_min_level
 
     def forage(self):
@@ -130,15 +130,15 @@ class Scripted(nmmo.Agent):
 
     def scan_agents(self):
         '''Scan the nearby area for agents'''
-        self.weakest, self.weakestDist = attack.minLevelTarget(
+        self.closest, self.closestDist = attack.closestTarget(
             self.config, self.ob)
         self.attacker, self.attackerDist = attack.attacker(
             self.config, self.ob)
 
-        self.weakestID = None
-        if self.weakest is not None:
-            self.weakestID = scripting.Observation.attribute(
-                self.weakest, nmmo.Serialized.Entity.ID)
+        self.closestID = None
+        if self.closest is not None:
+            self.closestID = scripting.Observation.attribute(
+                self.closest, nmmo.Serialized.Entity.ID)
 
         self.attackerID = None
         if self.attacker is not None:
@@ -156,15 +156,15 @@ class Scripted(nmmo.Agent):
         # TODO: this does not make sense because you need to target
         # at the most valuable agent rather than the nearest
         # You can change it to a queue of potential targets
-        if self.weakest is None:
+        if self.closest is None:
             return False
 
         selfLevel = scripting.Observation.attribute(
             self.ob.agent, nmmo.Serialized.Entity.Level)
         targLevel = scripting.Observation.attribute(
-            self.weakest, nmmo.Serialized.Entity.Level)
+            self.closest, nmmo.Serialized.Entity.Level)
         targPopulation = scripting.Observation.attribute(
-            self.weakest, nmmo.Serialized.Entity.Population)
+            self.closest, nmmo.Serialized.Entity.Population)
 
         # this can be an aggresive attack strategy
         # if selfLevel >= targLevel or (
@@ -175,10 +175,10 @@ class Scripted(nmmo.Agent):
         #     self.target = self.closest
         #     self.targetID = self.closestID
         #     self.targetDist = self.closestDist
-        if selfLevel >= targLevel - 2 or self.is_npc(targPopulation):
-            self.target = self.weakest
-            self.targetID = self.weakestID
-            self.targetDist = self.weakestDist
+        if selfLevel >= targLevel or self.is_npc(targPopulation):
+            self.target = self.closest
+            self.targetID = self.closestID
+            self.targetDist = self.closestDist
 
 
     def is_npc(self, targPop):
@@ -195,22 +195,25 @@ class Scripted(nmmo.Agent):
             attackerLevel = scripting.Observation.attribute(
                 self.attacker, nmmo.Serialized.Entity.Level)
 
-            if attackerLevel <= selfLevel:
-                # if the level is higher than attacker
-                self.target = self.attacker
-                self.targetID = self.attackerID
-                self.targetDist = self.attackerDist
-                return
+            # if attackerLevel <= selfLevel:
+            #     # if the level is higher than attacker
+            self.target = self.attacker
+            self.targetID = self.attackerID
+            self.targetDist = self.attackerDist
+            #     return
 
-            else:
+            # else:
+            #     self.evade()
+            #     return
+            if attackerLevel >= selfLevel + 1:
                 self.evade()
-                return
 
         if self.forage_criterion or not explore:
             self.forage()
         else:
             #self.explore()
-            self.explore_hybrid()
+            if self.target is None:
+                self.explore_hybrid()
 
         self.target_weak()
 
