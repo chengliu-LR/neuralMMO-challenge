@@ -130,15 +130,15 @@ class Scripted(nmmo.Agent):
 
     def scan_agents(self):
         '''Scan the nearby area for agents'''
-        self.closest, self.closestDist = attack.closestTarget(
+        self.weakest, self.weakestDist = attack.minLevelTarget(
             self.config, self.ob)
         self.attacker, self.attackerDist = attack.attacker(
             self.config, self.ob)
 
-        self.closestID = None
-        if self.closest is not None:
-            self.closestID = scripting.Observation.attribute(
-                self.closest, nmmo.Serialized.Entity.ID)
+        self.weakestID = None
+        if self.weakest is not None:
+            self.weakestID = scripting.Observation.attribute(
+                self.weakest, nmmo.Serialized.Entity.ID)
 
         self.attackerID = None
         if self.attacker is not None:
@@ -156,15 +156,15 @@ class Scripted(nmmo.Agent):
         # TODO: this does not make sense because you need to target
         # at the most valuable agent rather than the nearest
         # You can change it to a queue of potential targets
-        if self.closest is None:
+        if self.weakest is None:
             return False
 
         selfLevel = scripting.Observation.attribute(
             self.ob.agent, nmmo.Serialized.Entity.Level)
         targLevel = scripting.Observation.attribute(
-            self.closest, nmmo.Serialized.Entity.Level)
+            self.weakest, nmmo.Serialized.Entity.Level)
         targPopulation = scripting.Observation.attribute(
-            self.closest, nmmo.Serialized.Entity.Population)
+            self.weakest, nmmo.Serialized.Entity.Population)
 
         # this can be an aggresive attack strategy
         # if selfLevel >= targLevel or (
@@ -176,9 +176,9 @@ class Scripted(nmmo.Agent):
         #     self.targetID = self.closestID
         #     self.targetDist = self.closestDist
         if selfLevel >= targLevel - 2 or self.is_npc(targPopulation):
-            self.target = self.closest
-            self.targetID = self.closestID
-            self.targetDist = self.closestDist
+            self.target = self.weakest
+            self.targetID = self.weakestID
+            self.targetDist = self.weakestDist
 
 
     def is_npc(self, targPop):
@@ -210,7 +210,8 @@ class Scripted(nmmo.Agent):
             self.forage()
         else:
             #self.explore()
-            self.explore_hybrid()
+            if self.target is None:
+                self.explore_hybrid()
 
         self.target_weak()
 
