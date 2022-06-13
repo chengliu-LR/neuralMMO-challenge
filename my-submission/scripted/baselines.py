@@ -195,7 +195,7 @@ class Scripted(nmmo.Agent):
             attackerLevel = scripting.Observation.attribute(
                 self.attacker, nmmo.Serialized.Entity.Level)
 
-            if attackerLevel <= selfLevel <= 3 or (selfLevel >= attackerLevel - 3 and selfLevel >= 3):
+            if attackerLevel <= selfLevel:
                 # if the level is higher than attacker
                 self.target = self.attacker
                 self.targetID = self.attackerID
@@ -210,7 +210,13 @@ class Scripted(nmmo.Agent):
             self.forage()
         else:
             #self.explore()
-            if self.target is None:
+            if self.target is not None:
+                targPopulation = scripting.Observation.attribute(
+                    self.target, nmmo.Serialized.Entity.Population)
+
+                if not self.is_npc(targPopulation):
+                    self.explore_hybrid()
+            else:
                 self.explore_hybrid()
 
         self.target_weak()
@@ -265,8 +271,8 @@ class Protoss(Scripted):
 
         self.adaptive_control_and_targeting()
 
-        self.style = nmmo.action.Mage
-        #self.select_combat_style()
+        #self.style = nmmo.action.Mage
+        self.select_combat_style()
         #self.protoss_combat()
         self.attack()
 
