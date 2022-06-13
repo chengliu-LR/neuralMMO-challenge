@@ -10,13 +10,16 @@ def closestTarget(config, ob):
     Entity = nmmo.Serialized.Entity
     agent = ob.agent
 
+    selfPopulation = nmmo.scripting.Observation.attribute(agent, Entity.Population)
+
     sr = nmmo.scripting.Observation.attribute(agent, Entity.R)
     sc = nmmo.scripting.Observation.attribute(agent, Entity.C)
     start = (sr, sc)
 
     for target in ob.agents:
         exists = nmmo.scripting.Observation.attribute(target, Entity.Self) # Entity.Self indicates whether its valuable information
-        if not exists:
+        targPopulation = nmmo.scripting.Observation.attribute(target, Entity.Population)
+        if not (exists and (targPopulation != selfPopulation)):
             continue
 
         tr = nmmo.scripting.Observation.attribute(target, Entity.R)

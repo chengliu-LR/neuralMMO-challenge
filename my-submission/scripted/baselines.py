@@ -73,6 +73,11 @@ class Scripted(nmmo.Agent):
         move.evade(self.config, self.ob, self.actions, self.attacker)
 
 
+    def hunt(self):
+        '''Dynamicly attack & hunt the target agent'''
+        move.hunt(self.config, self.ob, self.actions, self.target)
+
+
     def attack(self):
         '''Attack the current target'''
         if self.target is not None:
@@ -80,11 +85,6 @@ class Scripted(nmmo.Agent):
             attack.target(self.config, self.actions, self.style, self.targetID)
             #targetHealth = scripting.Observation.attribute(self.target, nmmo.Serialized.Entity.Health)
             #print("target health ID {} and health {}\n".format(self.targetID, targetHealth))
-
-    
-    def hit_and_run(self):
-        '''Hit and run to dynamicly attack & evade from the target agent'''
-        pass
 
 
     def select_combat_style(self):
@@ -165,7 +165,6 @@ class Scripted(nmmo.Agent):
             self.closest, nmmo.Serialized.Entity.Level)
         targPopulation = scripting.Observation.attribute(
             self.closest, nmmo.Serialized.Entity.Population)
-
         # this can be an aggresive attack strategy
         # if selfLevel >= targLevel or (
         #     targPopulation == -1 and selfLevel >= targLevel - 10) or (   # passive npc
@@ -194,28 +193,22 @@ class Scripted(nmmo.Agent):
                 self.ob.agent, nmmo.Serialized.Entity.Level)
             attackerLevel = scripting.Observation.attribute(
                 self.attacker, nmmo.Serialized.Entity.Level)
-
             # if attackerLevel <= selfLevel:
             #     # if the level is higher than attacker
             self.target = self.attacker
             self.targetID = self.attackerID
             self.targetDist = self.attackerDist
-            #     return
-
             # else:
             #     self.evade()
             #     return
-            if attackerLevel >= selfLevel + 1:
-                self.evade()
+        self.target_weak()
 
         if self.forage_criterion or not explore:
             self.forage()
+        elif self.target is not None and self.targetDist > self.config.COMBAT_MAGE_REACH:
+            self.hunt()
         else:
-            #self.explore()
-            if self.target is None:
-                self.explore_hybrid()
-
-        self.target_weak()
+            self.explore_hybrid()
 
 
     def __call__(self, obs):
@@ -267,8 +260,8 @@ class Protoss(Scripted):
 
         self.adaptive_control_and_targeting()
 
-        #self.style = nmmo.action.Mage
-        self.select_combat_style()
+        self.style = nmmo.action.Mage
+        #self.select_combat_style()
         #self.protoss_combat()
         self.attack()
 

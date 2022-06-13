@@ -204,6 +204,21 @@ def evade(config, ob, actions, attacker):
     pathfind(config, ob, actions, rr, cc)
 
 
+def hunt(config, ob, actions, target):
+    Entity = nmmo.Serialized.Entity
+
+    sr = nmmo.scripting.Observation.attribute(ob.agent, Entity.R)
+    sc = nmmo.scripting.Observation.attribute(ob.agent, Entity.C)
+
+    gr = nmmo.scripting.Observation.attribute(target, Entity.R)
+    gc = nmmo.scripting.Observation.attribute(target, Entity.C)
+
+    # TODO: intelligent evade from attacker
+    rr, cc = (gr - sr, gc - sc)
+
+    pathfind(config, ob, actions, rr, cc)
+
+
 def forageDijkstra(config, ob, actions, food_max, water_max, cutoff=100):
     vision = config.NSTIM
     Entity = nmmo.Serialized.Entity
