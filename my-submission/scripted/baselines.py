@@ -3,6 +3,7 @@ from nmmo import scripting
 from nmmo.lib import colors
 import scripted.attack as attack
 import scripted.move as move
+from collections import deque
 
 class Scripted(nmmo.Agent):
     '''Template class for scripted models.
@@ -29,6 +30,12 @@ class Scripted(nmmo.Agent):
         # for square exploration
         self.current_target_point = None
 
+        # to get out of local optimum
+        self.local_trap_r = deque(maxlen=25)
+        self.local_trap_c = deque(maxlen=25)
+        self.stuck_steps = [0]
+        
+
     @property
     def forage_criterion(self) -> bool:
         '''Return true if low on food or water'''
@@ -54,7 +61,7 @@ class Scripted(nmmo.Agent):
 
     def explore_hybrid(self):
         self.current_target_point = move.explore_hybrid(self.config, self.ob, self.actions, self.spawnR,
-                                                self.spawnC, self.current_target_point)
+                                                self.spawnC, self.current_target_point, self.local_trap_r, self.local_trap_c, self.stuck_steps)
 
     @property
     def downtime(self):
@@ -63,14 +70,9 @@ class Scripted(nmmo.Agent):
 
 
     def evade(self):
-        '''Target and path away from an attacker'''
-        self.target = self.attacker
-        self.targetID = self.attackerID
-        self.targetDist = self.attackerDist
-
-        # freeze and then evade
+        '''Freeze the target and path away from an attacker'''
         attack.target(self.config, self.actions, nmmo.action.Mage, self.targetID)
-        move.evade(self.config, self.ob, self.actions, self.attacker)
+        move.evade(self.config, self.ob, self.actions, self.target)
 
 
     def hunt(self):
@@ -105,8 +107,7 @@ class Scripted(nmmo.Agent):
         if self.target is None:
             return
 
-        frozen = scripting.Observation.attribute(
-            self.target, nmmo.Serialized.Entity.Freeze)
+        frozen = scripting.Observation.attribute(self.target, nmmo.Serialized.Entity.Freeze)
         if not (frozen and self.frozen_count >= 1):
             self.style = nmmo.action.Mage
             self.frozen_count = 3
@@ -122,28 +123,18 @@ class Scripted(nmmo.Agent):
         self.frozen_count = max(0, self.frozen_count)
 
 
-    def protoss_hybrid_combat(self):
-        '''Hit with range and mage'''
-        if self.target is None:
-            return
-
-
     def scan_agents(self):
         '''Scan the nearby area for agents'''
-        self.closest, self.closestDist = attack.closestTarget(
-            self.config, self.ob)
-        self.attacker, self.attackerDist = attack.attacker(
-            self.config, self.ob)
+        self.closest, self.closestDist = attack.closestTarget(self.config, self.ob)
+        self.attacker, self.attackerDist = attack.attacker(self.config, self.ob)
 
         self.closestID = None
         if self.closest is not None:
-            self.closestID = scripting.Observation.attribute(
-                self.closest, nmmo.Serialized.Entity.ID)
+            self.closestID = scripting.Observation.attribute(self.closest, nmmo.Serialized.Entity.ID)
 
         self.attackerID = None
         if self.attacker is not None:
-            self.attackerID = scripting.Observation.attribute(
-                self.attacker, nmmo.Serialized.Entity.ID)
+            self.attackerID = scripting.Observation.attribute(self.attacker, nmmo.Serialized.Entity.ID)
 
         self.style = None
         self.target = None
@@ -151,62 +142,42 @@ class Scripted(nmmo.Agent):
         self.targetDist = None
 
 
-    def target_weak(self):
-        '''Target the nearest agent if it is weak'''
-        # TODO: this does not make sense because you need to target
-        # at the most valuable agent rather than the nearest
+    def aim_at_target(self):
+        '''Target the nearest agent if it is weak or target attacker'''
         # You can change it to a queue of potential targets
-        if self.closest is None:
-            return False
+        # aggresive attack strategy
+        #if selfLevel >= targLevel or self.is_npc(targPopulation):
+        self.target = self.closest
+        self.targetID = self.closestID
+        self.targetDist = self.closestDist
+        
+        if self.attacker is not None:
+            self.target = self.attacker
+            self.targetID = self.attackerID
+            self.targetDist = self.attackerDist
 
-        selfLevel = scripting.Observation.attribute(
-            self.ob.agent, nmmo.Serialized.Entity.Level)
-        targLevel = scripting.Observation.attribute(
-            self.closest, nmmo.Serialized.Entity.Level)
-        targPopulation = scripting.Observation.attribute(
-            self.closest, nmmo.Serialized.Entity.Population)
-        # this can be an aggresive attack strategy
-        # if selfLevel >= targLevel or (
-        #     targPopulation == -1 and selfLevel >= targLevel - 10) or (   # passive npc
-        #     targPopulation == -2 and selfLevel >= targLevel - 5) or (   # neutral npc
-        #     targPopulation == -3 and selfLevel >= targLevel - 2):       # hostile npc
-
-        #     self.target = self.closest
-        #     self.targetID = self.closestID
-        #     self.targetDist = self.closestDist
-        if selfLevel >= targLevel or self.is_npc(targPopulation):
-            self.target = self.closest
-            self.targetID = self.closestID
-            self.targetDist = self.closestDist
+        self.selfLevel = scripting.Observation.attribute(self.ob.agent, nmmo.Serialized.Entity.Level)
+        self.targetLevel = scripting.Observation.attribute(self.target, nmmo.Serialized.Entity.Level)
+        self.targetPopulation = scripting.Observation.attribute(self.target, nmmo.Serialized.Entity.Population)
 
 
     def is_npc(self, targPop):
         return targPop == -1 or targPop == -2 or targPop == -3
 
 
-    def adaptive_control_and_targeting(self, explore=True):
+    def adaptive_control_and_targeting(self):
         '''Balanced foraging, evasion, and exploration'''
         self.scan_agents()
-
-        if self.attacker is not None:
-            selfLevel = scripting.Observation.attribute(
-                self.ob.agent, nmmo.Serialized.Entity.Level)
-            attackerLevel = scripting.Observation.attribute(
-                self.attacker, nmmo.Serialized.Entity.Level)
-            # if attackerLevel <= selfLevel:
-            #     # if the level is higher than attacker
-            self.target = self.attacker
-            self.targetID = self.attackerID
-            self.targetDist = self.attackerDist
-            # else:
-            #     self.evade()
-            #     return
-        self.target_weak()
-
-        if self.forage_criterion or not explore:
+        if self.forage_criterion and self.attacker is None:
             self.forage()
-        elif self.target is not None and self.targetDist > self.config.COMBAT_MAGE_REACH:
-            self.hunt()
+        elif self.closest is not None:
+            self.aim_at_target()
+            if self.target is not None:
+                if self.is_npc(self.targetPopulation) or self.selfLevel >= self.targetLevel:
+                    if self.targetDist > self.config.COMBAT_MAGE_REACH:
+                        self.hunt()
+                else:
+                    self.evade()
         else:
             self.explore_hybrid()
 
@@ -222,10 +193,8 @@ class Scripted(nmmo.Agent):
         self.ob = scripting.Observation(self.config, obs)
         agent = self.ob.agent
 
-        self.food = scripting.Observation.attribute(
-            agent, nmmo.Serialized.Entity.Food)
-        self.water = scripting.Observation.attribute(
-            agent, nmmo.Serialized.Entity.Water)
+        self.food = scripting.Observation.attribute(agent, nmmo.Serialized.Entity.Food)
+        self.water = scripting.Observation.attribute(agent, nmmo.Serialized.Entity.Water)
 
         if self.food > self.food_max:
             self.food_max = self.food
@@ -233,22 +202,15 @@ class Scripted(nmmo.Agent):
             self.water_max = self.water
 
         if self.spawnR is None:
-            self.spawnR = scripting.Observation.attribute(
-                agent, nmmo.Serialized.Entity.R)
+            self.spawnR = scripting.Observation.attribute(agent, nmmo.Serialized.Entity.R)
         if self.spawnC is None:
-            self.spawnC = scripting.Observation.attribute(
-                agent, nmmo.Serialized.Entity.C)
+            self.spawnC = scripting.Observation.attribute(agent, nmmo.Serialized.Entity.C)
 
 
     @property
     def targets(self):
-        return [
-            x for x in [
-                scripting.Observation.attribute(target,
-                                                nmmo.Serialized.Entity.ID)
-                for target in self.ob.agents # ob.agents = scripting.Observation['Entity']['Continuous']
-            ] if x
-        ] # return target ID of observable agents
+        return [x for x in [scripting.Observation.attribute(target, nmmo.Serialized.Entity.ID)
+                for target in self.ob.agents] if x] # return target ID of observable agents
 
 
 class Protoss(Scripted):
@@ -257,11 +219,9 @@ class Protoss(Scripted):
 
     def __call__(self, obs):
         super().__call__(obs)
-
         self.adaptive_control_and_targeting()
-
-        self.style = nmmo.action.Mage
-        #self.select_combat_style()
+        #self.style = nmmo.action.Mage
+        self.select_combat_style()
         #self.protoss_combat()
         self.attack()
 

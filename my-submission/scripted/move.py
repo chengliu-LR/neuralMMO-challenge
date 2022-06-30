@@ -76,7 +76,7 @@ def meander(config, ob, actions):
     actions[nmmo.action.Move] = {nmmo.action.Direction: direction}
 
 
-def explore_hybrid(config, ob, actions, spawnR, spawnC, current_target):
+def explore_hybrid(config, ob, actions, spawnR, spawnC, current_target, local_trap_r, local_trap_c, stuck_steps):
     vision = config.NSTIM
     sz = config.TERRAIN_SIZE
     Entity = nmmo.Serialized.Entity
@@ -84,11 +84,13 @@ def explore_hybrid(config, ob, actions, spawnR, spawnC, current_target):
     agent = ob.agent
     r = nmmo.scripting.Observation.attribute(agent, Entity.R)
     c = nmmo.scripting.Observation.attribute(agent, Entity.C)
-    threshold = int(0.6 * sz / 2)
+
+    threshold = int(0.8 * sz / 2)
+
     if not utils.inInnerLoop(config, r, c, threshold):
         cur_tar = explore(config, ob, actions, spawnR, spawnC)
     else:
-        cur_tar = explore_square(config, ob, actions, spawnR, spawnC, current_target)
+        cur_tar = explore_square(config, ob, actions, spawnR, spawnC, current_target, local_trap_r, local_trap_c, stuck_steps)
 
     return cur_tar
 
@@ -115,7 +117,7 @@ def explore(config, ob, actions, spawnR, spawnC, current_target):
     return current_target
 
 
-def explore_square(config, ob, actions, spawnR, spawnC, current_target):
+def explore_square(config, ob, actions, spawnR, spawnC, current_target, local_trap_r, local_trap_c, stuck_steps):
     '''explore in counter-clockwise or clockwise direction'''
     entID = nmmo.scripting.Observation.attribute(ob.agent, nmmo.Serialized.Entity.ID)
     pop = nmmo.scripting.Observation.attribute(ob.agent, nmmo.Serialized.Entity.Population)
@@ -123,17 +125,17 @@ def explore_square(config, ob, actions, spawnR, spawnC, current_target):
     c = nmmo.scripting.Observation.attribute(ob.agent, nmmo.Serialized.Entity.C)
 
     inSquadOne = utils.inSquadOne(entID, pop)
-    rr, cc, cur_tar = squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne, current_target)
+    rr, cc, cur_tar = squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne, current_target, local_trap_r, local_trap_c, stuck_steps)
     pathfind(config, ob, actions, rr, cc)
 
     return cur_tar
 
 
-def squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne, current_target):
+def squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne, current_target, local_trap_r, local_trap_c, stuck_steps):
     vision = config.NSTIM
     
-    LOWER_BOUND = 20
-    UPPER_BOUND = 120
+    LOWER_BOUND = 16
+    UPPER_BOUND = 128
 
     UP_LEFT = (LOWER_BOUND, LOWER_BOUND)
     UP_RIGHT = (LOWER_BOUND, UPPER_BOUND)
@@ -143,6 +145,8 @@ def squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne, current_
     targetsList = [UP_LEFT, DOWN_LEFT, DOWN_RIGHT, UP_RIGHT]
     spawnLeftBottom = utils.spawnLeftBottom(config, spawnR, spawnC)
     current_pos = (r, c)
+    local_trap_r.append(r)
+    local_trap_c.append(c)
 
     if current_target is None:
         # initial position
@@ -173,7 +177,13 @@ def squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne, current_
         current_target = (targR, targC)
 
     else:
-        if goal_reached(current_pos, current_target):
+        r_range = [np.min(local_trap_r), np.max(local_trap_r)]
+        c_range = [np.min(local_trap_c), np.max(local_trap_c)]
+        is_stuck = agent_stuck(r, c, r_range, c_range, stuck_steps)
+        local_trap_r.append(r)
+        local_trap_c.append(c)
+
+        if goal_reached(current_pos, current_target) or is_stuck:
             current_target = utils.nextTarget(current_target, targetsList, inSquadOne, spawnLeftBottom)
 
     targR, targC = current_target
@@ -189,16 +199,26 @@ def goal_reached(start, goal, bar=10):
     return utils.lInfty(start, goal) <= bar
 
 
-def evade(config, ob, actions, attacker):
+def agent_stuck(r, c, r_range, c_range, stuck_steps, stuck_threshold=25):
+    '''stuck_steps is a list'''
+    if r_range[0] <= r <= r_range[1] and c_range[0] <= c <= c_range[1]:
+        stuck_steps[0] += 1
+        if stuck_steps[0] >= stuck_threshold:
+            stuck_steps[0] = 0
+            return True
+    return False
+
+
+def evade(config, ob, actions, target):
     Entity = nmmo.Serialized.Entity
 
     sr = nmmo.scripting.Observation.attribute(ob.agent, Entity.R)
     sc = nmmo.scripting.Observation.attribute(ob.agent, Entity.C)
 
-    gr = nmmo.scripting.Observation.attribute(attacker, Entity.R)
-    gc = nmmo.scripting.Observation.attribute(attacker, Entity.C)
+    gr = nmmo.scripting.Observation.attribute(target, Entity.R)
+    gc = nmmo.scripting.Observation.attribute(target, Entity.C)
 
-    # TODO: intelligent evade from attacker
+    # TODO: intelligent evade from target
     rr, cc = (2 * sr - gr, 2 * sc - gc)
 
     pathfind(config, ob, actions, rr, cc)
