@@ -40,15 +40,16 @@ def towards(direction):
     elif direction == (0, 1):
         return nmmo.action.East
     else:
-        # return rand.choice(nmmo.action.Direction.edges) # Possible reason for jumping into Lava
+        #return rand.choice(nmmo.action.Direction.edges) # Possible reason for jumping into Lava
         return None
 
 
 def pathfind(config, ob, actions, rr, cc):
-    direction = aStar(config, ob, actions, rr, cc)
+    direction, pathFound = aStar(config, ob, actions, rr, cc)
     direction = towards(direction) # turn the direction tuple to action.Direction object
     if direction is not None:
         actions[nmmo.action.Move] = {nmmo.action.Direction: direction}
+    return pathFound
 
 
 def meander(config, ob, actions):
@@ -95,7 +96,28 @@ def explore_hybrid(config, ob, actions, spawnR, spawnC, current_target, local_tr
     return cur_tar
 
 
-def explore(config, ob, actions, spawnR, spawnC, current_target):
+def explore_hybrid_squad(config, ob, actions, spawnR, spawnC, current_target, local_trap_r, local_trap_c, stuck_steps):
+    vision = config.NSTIM
+    sz = config.TERRAIN_SIZE
+    Entity = nmmo.Serialized.Entity
+    Tile = nmmo.Serialized.Tile
+    agent = ob.agent
+    entID = nmmo.scripting.Observation.attribute(agent, Entity.ID)
+    pop = nmmo.scripting.Observation.attribute(agent, Entity.Population)
+    r = nmmo.scripting.Observation.attribute(agent, Entity.R)
+    c = nmmo.scripting.Observation.attribute(agent, Entity.C)
+
+    inSquadOne = utils.inSquadOne(entID, pop)
+
+    if inSquadOne:
+        cur_tar = explore(config, ob, actions, spawnR, spawnC, current_target)
+    else:
+        cur_tar = explore_square(config, ob, actions, spawnR, spawnC, current_target, local_trap_r, local_trap_c, stuck_steps)
+
+    return cur_tar
+
+
+def explore(config, ob, actions, spawnR, spawnC, current_target, pathFound=[True], self_rr=[None], self_cc=[None]):
     vision = config.NSTIM
     sz = config.TERRAIN_SIZE
     Entity = nmmo.Serialized.Entity
@@ -110,11 +132,24 @@ def explore(config, ob, actions, spawnR, spawnC, current_target):
     vR, vC = centR - spawnR, centC - spawnC
 
     mmag = max(abs(vR), abs(vC))
-    rr = int(np.round(vision * vR / mmag))
-    cc = int(np.round(vision * vC / mmag))
-    pathfind(config, ob, actions, rr, cc)
+    rr = min(max(int(np.round(vision * vR / mmag)), -7), 7)
+    cc = min(max(int(np.round(vision * vC / mmag)), -7), 7)
+
+    if self_rr[0] is None:
+        self_rr[0] = rr
+        self_cc[0] = cc
+
+    if not pathFound[0]:
+        rr, cc = transpose(self_rr[0], self_cc[0])
+    pathFound[0] = pathfind(config, ob, actions, rr, cc)
 
     return current_target
+
+
+def transpose(rr, cc):
+        trans_rr = cc
+        trans_cc = -rr
+        return trans_rr, trans_cc
 
 
 def explore_square(config, ob, actions, spawnR, spawnC, current_target, local_trap_r, local_trap_c, stuck_steps):
@@ -135,7 +170,7 @@ def squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne, current_
     vision = config.NSTIM
     
     LOWER_BOUND = 16
-    UPPER_BOUND = 128
+    UPPER_BOUND = 144
 
     UP_LEFT = (LOWER_BOUND, LOWER_BOUND)
     UP_RIGHT = (LOWER_BOUND, UPPER_BOUND)
@@ -179,11 +214,11 @@ def squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne, current_
     else:
         r_range = [np.min(local_trap_r), np.max(local_trap_r)]
         c_range = [np.min(local_trap_c), np.max(local_trap_c)]
-        is_stuck = agent_stuck(r, c, r_range, c_range, stuck_steps)
+        #is_stuck = agent_stuck(r, c, r_range, c_range, stuck_steps)
         local_trap_r.append(r)
         local_trap_c.append(c)
 
-        if goal_reached(current_pos, current_target) or is_stuck:
+        if goal_reached(current_pos, current_target):
             current_target = utils.nextTarget(current_target, targetsList, inSquadOne, spawnLeftBottom)
 
     targR, targC = current_target
@@ -195,7 +230,7 @@ def squad_target(config, ob, actions, spawnR, spawnC, r, c, inSquadOne, current_
     return rr, cc, current_target
 
 
-def goal_reached(start, goal, bar=10):
+def goal_reached(start, goal, bar=5):
     return utils.lInfty(start, goal) <= bar
 
 
@@ -315,16 +350,14 @@ def forageDijkstra(config, ob, actions, food_max, water_max, cutoff=100):
         actions[nmmo.action.Move] = {nmmo.action.Direction: direction}
 
 
-def aStar(config, ob, actions, rr, cc, cutoff=100):
+def aStar(config, ob, actions, rr, cc, cutoff=200):
     Entity = nmmo.Serialized.Entity
     Tile = nmmo.Serialized.Tile
     vision = config.NSTIM
+    pathFound = False
 
     start = (0, 0)
     goal = (rr, cc)
-
-    if start == goal:
-        return (0, 0)
 
     pq = PriorityQueue()
     pq.put((0, start))
@@ -347,6 +380,7 @@ def aStar(config, ob, actions, rr, cc, cutoff=100):
         priority, cur = pq.get()
 
         if cur == goal:
+            pathFound = True
             break
 
         for nxt in adjacentPos(cur):
@@ -390,4 +424,4 @@ def aStar(config, ob, actions, rr, cc, cutoff=100):
     while goal in backtrace and backtrace[goal] != start:
         goal = backtrace[goal]
 
-    return goal
+    return goal, pathFound

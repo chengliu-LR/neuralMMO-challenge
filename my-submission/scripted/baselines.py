@@ -34,6 +34,9 @@ class Scripted(nmmo.Agent):
         self.local_trap_r = deque(maxlen=25)
         self.local_trap_c = deque(maxlen=25)
         self.stuck_steps = [0]
+        self.pathFound = [True]
+        self.rr = [None]
+        self.cc = [None]
         
 
     @property
@@ -51,16 +54,16 @@ class Scripted(nmmo.Agent):
     def explore(self):
         '''Route away from spawn'''
         self.current_target_point = move.explore(self.config, self.ob, self.actions, self.spawnR,
-                                            self.spawnC, self.current_target_point)
+                                            self.spawnC, self.current_target_point, self.pathFound, self.rr, self.cc)
 
 
     def explore_square(self):
         '''Rout away in square from spawn'''
         self.current_target_point = move.explore_square(self.config, self.ob, self.actions, self.spawnR,
-                                                  self.spawnC, self.current_target_point)
+                                                  self.spawnC, self.current_target_point, self.local_trap_r, self.local_trap_c, self.stuck_steps)
 
     def explore_hybrid(self):
-        self.current_target_point = move.explore_hybrid(self.config, self.ob, self.actions, self.spawnR,
+        self.current_target_point = move.explore_hybrid_squad(self.config, self.ob, self.actions, self.spawnR,
                                                 self.spawnC, self.current_target_point, self.local_trap_r, self.local_trap_c, self.stuck_steps)
 
     @property
@@ -179,7 +182,9 @@ class Scripted(nmmo.Agent):
                 else:
                     self.evade()
         else:
-            self.explore_hybrid()
+            self.explore()
+            if not self.pathFound[0]:
+                self.forage()
 
 
     def __call__(self, obs):
